@@ -48,6 +48,7 @@ function getExecType(): string {
 }
 
 async function writeSummary(json: LogLintResult) {
+  console.log("writeSummary: json=", JSON.stringify(json));
   if (json.errors) {
     let summary =  core.summary.addHeading('LogLint Summary')
     for (const error of json.errors) {

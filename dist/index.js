@@ -63,6 +63,17 @@ function getExecType() {
             throw new Error(`Unsupported architecture: ${_architecture}`);
     }
 }
+async function writeSummary(json) {
+    console.log("writeSummary: json=", JSON.stringify(json));
+    if (json.errors) {
+        let summary = core.summary.addHeading('LogLint Summary');
+        for (const error of json.errors) {
+            const items = error.matches.map(x => `- ${x.message} [${x.start},L${x.end}]`);
+            summary = summary.addRaw(`${error.help}`).addList(items).addBreak();
+        }
+        await summary.write();
+    }
+}
 async function run() {
     try {
         const logFile = core.getInput('log_file');
@@ -80,6 +91,8 @@ async function run() {
         if (result.status === 0) {
             console.log(`Stdout: ${result.stdout}`);
             core.setOutput('result', result.stdout);
+            const lintResult = JSON.parse(result.stdout);
+            await writeSummary(lintResult);
         }
         else {
             console.log(`Stdout: ${result.stdout}`);

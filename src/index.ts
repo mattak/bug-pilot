@@ -56,11 +56,11 @@ async function run() {
       console.log(`Stdout: ${result.stdout}`);
       console.error(`Stderr: ${result.stderr}`);
     }
-
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
     }
+    process.exit(1);
   }
 }
 

@@ -4,6 +4,18 @@ import * as os from 'os';
 import * as fs from 'fs';
 import {spawnSync} from "node:child_process";
 
+type LogLintResult = {
+  passed: boolean,
+  errors?: [
+    {
+      matches: [
+        { start: number, end: number, message: string }
+      ],
+      help: string
+    }
+  ],
+}
+
 function getExecType(): string {
   const _operatingSystem = os.platform(); // e.g. 'darwin', 'win32', 'linux'
   const _architecture = os.arch(); // e.g. 'x64', 'arm', 'arm64'
@@ -35,6 +47,17 @@ function getExecType(): string {
   }
 }
 
+async function writeSummary(json: LogLintResult) {
+  if (json.errors) {
+    let summary =  core.summary.addHeading('LogLint Summary')
+    for (const error of json.errors) {
+      const items: string[] = error.matches.map(x => `- ${x.message} [${x.start},L${x.end}]`);
+      summary = summary.addRaw(`${error.help}`).addList(items).addBreak();
+    }
+    await summary.write();
+  }
+}
+
 async function run() {
   try {
     const logFile = core.getInput('log_file');
@@ -45,7 +68,7 @@ async function run() {
     const lintPath = `${__dirname}/.loglint.json`;
 
     // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
-    const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });
+    const inputContent = fs.readFileSync(logFile, {encoding: 'utf-8'});
     const result = spawnSync(execPath, ['-f', lintPath], {
       input: inputContent,
       encoding: 'utf-8'
@@ -54,11 +77,14 @@ async function run() {
     if (result.status === 0) {
       console.log(`Stdout: ${result.stdout}`);
       core.setOutput('result', result.stdout);
+      const lintResult = JSON.parse(result.stdout);
+      await writeSummary(lintResult);
     } else {
       console.log(`Stdout: ${result.stdout}`);
       console.error(`Stderr: ${result.stderr}`);
       core.setFailed(`Stderr: ${result.stderr}`);
     }
+
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);

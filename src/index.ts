@@ -11,7 +11,7 @@ function getExecType(): string {
   let operatingSystem = '';
   switch (_operatingSystem) {
     case 'darwin':
-      operatingSystem = 'macos';
+      operatingSystem = 'darwin';
       break;
     case 'win32':
       operatingSystem = 'windows';
@@ -25,9 +25,9 @@ function getExecType(): string {
 
   switch (_architecture) {
     case 'x64':
-      return `${operatingSystem}_x64`;
-    case 'arm':
-      return `${operatingSystem}_arm`;
+      return `${operatingSystem}_amd64`;
+    case 'amd64':
+      return `${operatingSystem}_amd64`;
     case 'arm64':
       return `${operatingSystem}_arm64`;
     default:

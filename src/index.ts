@@ -1,7 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as os from 'os';
-import { execSync } from 'child_process';
 import * as fs from 'fs';
 import {spawnSync} from "node:child_process";
 
@@ -42,7 +41,7 @@ async function run() {
     core.info(`Target log file: ${logFile}!`);
     core.info(`Event: ${github.context.eventName}`);
     const platform = getExecType();
-    const execPath = `${__dirname}/../bin/${platform}/loglint`;
+    const execPath = `${__dirname}/bin/${platform}/loglint`;
 
     // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
     const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });

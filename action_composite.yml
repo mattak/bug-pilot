@@ -1,0 +1,35 @@
+name: "Bug Pilot"
+description: "Analyze bugs from previous build."
+author: "Takuma Maruyama"
+runs:
+  using: "composite"
+  steps:
+    - name: Debug to check entrypoint.sh is executable
+      run: |
+        pwd
+        ls -al
+      shell: bash
+
+    - name: Run on Linux
+      if: startsWith(runner.os, 'Linux')
+      run: entrypoint.sh ./bin/linux_amd64/loglint ${{ inputs.log_file }}
+      shell: bash
+
+    - name: Run on macOS
+      if: startsWith(runner.os, 'macOS')
+      run: entrypoint.sh ./bin/darwin_arm64/loglint ${{ inputs.log_file }}
+      shell: bash
+
+    - name: Run on Windows
+      if: startsWith(runner.os, 'Windows')
+      run: entrypoint.sh ./bin/windows_amd64/loglint ${{ inputs.log_file }}
+      shell: bash
+
+inputs:
+  log_file: 
+    description: "The path of analyze logs"
+    required: true
+
+outputs:
+  errors:
+    description: "Analyze errors from the log file"

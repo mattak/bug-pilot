@@ -61,8 +61,9 @@ async function run() {
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
+    } else {
+      core.setFailed(`An unexpected error occurred: ${error}`);
     }
-    process.exit(1);
   }
 }
 

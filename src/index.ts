@@ -50,11 +50,13 @@ async function run() {
       encoding: 'utf-8'
     });
 
-    if (result.error) {
-      console.error(`Error: ${result.error.message}`);
+    if (result.status === 0) {
+      console.log(`Stdout: ${result.stdout}`);
+      core.setOutput('result', result.stdout);
     } else {
       console.log(`Stdout: ${result.stdout}`);
       console.error(`Stderr: ${result.stderr}`);
+      core.setFailed(`Stderr: ${result.stderr}`);
     }
   } catch (error) {
     if (error instanceof Error) {

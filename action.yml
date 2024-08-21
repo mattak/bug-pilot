@@ -6,17 +6,17 @@ runs:
   steps:
     - name: Run on Linux
       if: startsWith(runner.os, 'Linux')
-      run: ./src/entrypoint.sh ./bin/linux_amd64/loglint ${{ inputs.log_file }}
+      run: entrypoint.sh ./bin/linux_amd64/loglint ${{ inputs.log_file }}
       shell: bash
 
     - name: Run on macOS
       if: startsWith(runner.os, 'macOS')
-      run: ./src/entrypoint.sh ./bin/darwin_arm64/loglint ${{ inputs.log_file }}
+      run: entrypoint.sh ./bin/darwin_arm64/loglint ${{ inputs.log_file }}
       shell: bash
 
     - name: Run on Windows
       if: startsWith(runner.os, 'Windows')
-      run: ./src/entrypoint.sh ./bin/windows_amd64/loglint ${{ inputs.log_file }}
+      run: entrypoint.sh ./bin/windows_amd64/loglint ${{ inputs.log_file }}
       shell: bash
 
 inputs:

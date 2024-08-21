@@ -18,5 +18,6 @@ if [ -n "$GITHUB_OUTPUT" ]; then
   echo "time=$time" >> "$GITHUB_OUTPUT"
 fi
 
+pwd
 env
 $CMD < "$2"

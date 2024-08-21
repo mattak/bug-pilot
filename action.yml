@@ -4,6 +4,12 @@ author: "Takuma Maruyama"
 runs:
   using: "composite"
   steps:
+    - name: Debug to check entrypoint.sh is executable
+      run: |
+        pwd
+        ls -al
+      shell: bash
+
     - name: Run on Linux
       if: startsWith(runner.os, 'Linux')
       run: entrypoint.sh ./bin/linux_amd64/loglint ${{ inputs.log_file }}

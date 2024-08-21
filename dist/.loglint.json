@@ -1,0 +1,8 @@
+[
+  {
+    "name": "sample",
+    "type": "error",
+    "detections": ["^Error: "],
+    "help": "you can fix error by this link https://..."
+  }
+]

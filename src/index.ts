@@ -42,10 +42,11 @@ async function run() {
     core.info(`Event: ${github.context.eventName}`);
     const platform = getExecType();
     const execPath = `${__dirname}/bin/${platform}/loglint`;
+    const lintPath = `${__dirname}/.loglint.json`;
 
     // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
     const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });
-    const result = spawnSync(execPath, [], {
+    const result = spawnSync(execPath, ['-f', lintPath], {
       input: inputContent,
       encoding: 'utf-8'
     });

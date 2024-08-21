@@ -70,9 +70,10 @@ async function run() {
         core.info(`Event: ${github.context.eventName}`);
         const platform = getExecType();
         const execPath = __nccwpck_require__.ab + "bin/" + platform + '/loglint';
+        const lintPath = __nccwpck_require__.ab + ".loglint.json";
         // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
         const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });
-        const result = (0, node_child_process_1.spawnSync)(execPath, [], {
+        const result = (0, node_child_process_1.spawnSync)(execPath, ['-f', __nccwpck_require__.ab + ".loglint.json"], {
             input: inputContent,
             encoding: 'utf-8'
         });

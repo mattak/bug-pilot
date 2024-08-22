@@ -1,8 +1,20 @@
 [
   {
-    "name": "sample",
+    "name": "Shell Error",
     "type": "error",
     "detections": ["^Error: "],
-    "help": "you can fix error by this link https://..."
+    "help": "An error is printed"
+  },
+  {
+    "name": "Uhity Error",
+    "type": "error",
+    "detections": ["^##### ExitCode\\s*","^[1-9]\\d*\\s*$"],
+    "help": "Unity build is failed with non zero exit code"
+  },
+  {
+    "name": "C# Error",
+    "type": "error",
+    "detections": ["^.+\\.cs\\(\\d+,\\d+\\): error CS\\d+: .+"],
+    "help": "Compile error is printed"
   }
 ]

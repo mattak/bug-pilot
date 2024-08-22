@@ -66,10 +66,10 @@ function getExecType() {
 async function writeSummary(json) {
     console.log("writeSummary: json=", JSON.stringify(json));
     if (json.errors) {
-        let summary = core.summary.addHeading('LogLint Summary');
+        let summary = core.summary.addHeading('Errors by BugPilot', 2);
         for (const error of json.errors) {
-            const items = error.matches.map(x => `- ${x.message} [${x.start},L${x.end}]`);
-            summary = summary.addRaw(`${error.help}`).addList(items).addBreak();
+            const items = error.matches.map(x => `${x.message} [${x.start},${x.end}]`);
+            summary = summary.addRaw(`<details><summary>${error.name}</summary>` + '\n```' + items.join("\n") + '```\n</details>').addBreak();
         }
         await summary.write();
     }

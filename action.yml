@@ -1,5 +1,5 @@
 name: "Bug Pilot"
-description: "Analyze bugs from previous build."
+description: "Analyze errors from previous build log."
 author: "Takuma Maruyama"
 runs:
   using: "node20"

@@ -6,7 +6,7 @@
     "help": "An error is printed"
   },
   {
-    "name": "Uhity Error",
+    "name": "Unity Error",
     "type": "error",
     "detections": ["^##### ExitCode\\s*","^[1-9]\\d*\\s*$"],
     "help": "Unity build is failed with non zero exit code"

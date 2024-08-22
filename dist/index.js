@@ -66,7 +66,8 @@ function getExecType() {
 async function writeSummary(json) {
     console.log("writeSummary: json=", JSON.stringify(json));
     if (json.errors) {
-        let summary = core.summary.addHeading('Errors by BugPilot', 2);
+        const errorCount = json.errors.length;
+        let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
         for (const error of json.errors) {
             const items = error.matches.map(x => `LINE: ${x.start},${x.end}\n`
                 + '```text\n'

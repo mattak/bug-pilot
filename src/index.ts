@@ -53,8 +53,17 @@ async function writeSummary(json: LogLintResult) {
   if (json.errors) {
     let summary = core.summary.addHeading('Errors by BugPilot', 2);
     for (const error of json.errors) {
-      const items: string[] = error.matches.map(x => `${x.message} [${x.start},${x.end}]`);
-      summary = summary.addRaw(`<details><summary>${error.name}</summary>` + '\n\n```\n' + items.join("\n") + '\n```\n</details>').addBreak();
+      const items: string[] = error.matches.map(x =>
+        `LINE: ${x.start},${x.end}\n`
+        + '```text\n'
+        + x.message
+        + '\n```\n'
+      );
+      const statement = `<details><summary>${error.name}</summary>`
+        + '\n\n'
+        + items.join("\n")
+        + '\n</details>\n';
+      summary = summary.addRaw(statement);
     }
     await summary.write();
   }

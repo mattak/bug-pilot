@@ -69,7 +69,7 @@ async function writeSummary(json) {
         let summary = core.summary.addHeading('Errors by BugPilot', 2);
         for (const error of json.errors) {
             const items = error.matches.map(x => `${x.message} [${x.start},${x.end}]`);
-            summary = summary.addRaw(`<details><summary>${error.name}</summary>` + '\n```' + items.join("\n") + '```\n</details>').addBreak();
+            summary = summary.addRaw(`<details><summary>${error.name}</summary>` + '\n\n```\n' + items.join("\n") + '\n```\n</details>').addBreak();
         }
         await summary.write();
     }

@@ -32,12 +32,97 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const os = __importStar(__nccwpck_require__(2037));
 const fs = __importStar(__nccwpck_require__(7147));
 const node_child_process_1 = __nccwpck_require__(7718);
+const summary_writer_1 = __nccwpck_require__(9030);
+const input_1 = __nccwpck_require__(3617);
+async function run() {
+    try {
+        const input = (0, input_1.parseInput)();
+        const logFile = input.logFile;
+        core.info(`Input: ${JSON.stringify(input.logFile)}!`);
+        core.info(`Event: ${github.context.eventName}`);
+        const [isValid, errorMessage] = (0, input_1.validateInput)(input);
+        if (!isValid) {
+            core.setFailed(errorMessage);
+            return;
+        }
+        const platform = (0, input_1.getExecType)();
+        const execPath = __nccwpck_require__.ab + "bin/" + platform + '/loglint';
+        const lintPath = __nccwpck_require__.ab + ".loglint.json";
+        // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
+        const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });
+        const result = (0, node_child_process_1.spawnSync)(execPath, ['-f', __nccwpck_require__.ab + ".loglint.json"], {
+            input: inputContent,
+            encoding: 'utf-8'
+        });
+        if (result.status === 0) {
+            console.log(`Stdout: ${result.stdout}`);
+            core.setOutput('result', result.stdout);
+            const lintResult = JSON.parse(result.stdout);
+            await (0, summary_writer_1.writeSummary)(lintResult, input);
+        }
+        else {
+            console.log(`Stdout: ${result.stdout}`);
+            console.error(`Stderr: ${result.stderr}`);
+            core.setFailed(result.stderr);
+        }
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+        }
+        else {
+            core.setFailed(`An unexpected error occurred: ${error}`);
+        }
+    }
+}
+run();
+
+
+/***/ }),
+
+/***/ 3617:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getExecType = getExecType;
+exports.validateInput = validateInput;
+exports.parseInput = parseInput;
+const os_1 = __importDefault(__nccwpck_require__(2037));
+const core = __importStar(__nccwpck_require__(2186));
+const fs = __importStar(__nccwpck_require__(7561));
 function getExecType() {
-    const _operatingSystem = os.platform(); // e.g. 'darwin', 'win32', 'linux'
-    const _architecture = os.arch(); // e.g. 'x64', 'arm', 'arm64'
+    const _operatingSystem = os_1.default.platform(); // e.g. 'darwin', 'win32', 'linux'
+    const _architecture = os_1.default.arch(); // e.g. 'x64', 'arm', 'arm64'
     let operatingSystem = '';
     switch (_operatingSystem) {
         case 'darwin':
@@ -63,13 +148,88 @@ function getExecType() {
             throw new Error(`Unsupported architecture: ${_architecture}`);
     }
 }
-async function writeSummary(json) {
+function validateInput(input) {
+    if (!fs.existsSync(input.logFile))
+        return [false, `ERROR: logFile is not found: ${input.logFile}`];
+    return [true, ""];
+}
+function parseInput() {
+    const logFile = core.getInput('log_file', { required: true });
+    const stepName = core.getInput('step_name', { required: false });
+    const jobName = core.getInput('job_name', { required: false });
+    const githubToken = core.getInput('github_token', { required: true });
+    return {
+        logFile,
+        jobName,
+        stepName,
+        githubToken,
+    };
+}
+
+
+/***/ }),
+
+/***/ 9030:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.writeSummary = writeSummary;
+const github = __importStar(__nccwpck_require__(5438));
+const core = __importStar(__nccwpck_require__(2186));
+async function getTargetJobURL(githubToken, jobName, stepName) {
+    const octokit = github.getOctokit(githubToken);
+    const repo = {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+    };
+    const runId = github.context.runId;
+    const { data: jobs } = await octokit.rest.actions.listJobsForWorkflowRun({
+        ...repo,
+        run_id: runId
+    });
+    const job = jobs.jobs.find(job => job.name === jobName);
+    if (!job)
+        return null;
+    const buildStep = job.steps?.find(step => step.name === stepName);
+    if (!buildStep)
+        return null;
+    const stepNumber = buildStep.number;
+    return `${job.run_url}/job/${job.id}#step:${stepNumber}`;
+}
+async function writeSummary(json, input) {
+    const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
     console.log("writeSummary: json=", JSON.stringify(json));
+    console.log("baseURL: ", baseURL);
     if (json.errors) {
         const errorCount = json.errors.length;
         let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
         for (const error of json.errors) {
-            const items = error.matches.map(x => `LINE: ${x.start},${x.end}\n`
+            const items = error.matches.map(x => `[L${x.start},${x.end}](${baseURL}:${x.start})\n\n`
                 + '```text\n'
                 + x.message
                 + '\n```\n');
@@ -82,42 +242,6 @@ async function writeSummary(json) {
         await summary.write();
     }
 }
-async function run() {
-    try {
-        const logFile = core.getInput('log_file');
-        core.info(`Target log file: ${logFile}!`);
-        core.info(`Event: ${github.context.eventName}`);
-        const platform = getExecType();
-        const execPath = __nccwpck_require__.ab + "bin/" + platform + '/loglint';
-        const lintPath = __nccwpck_require__.ab + ".loglint.json";
-        // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
-        const inputContent = fs.readFileSync(logFile, { encoding: 'utf-8' });
-        const result = (0, node_child_process_1.spawnSync)(execPath, ['-f', __nccwpck_require__.ab + ".loglint.json"], {
-            input: inputContent,
-            encoding: 'utf-8'
-        });
-        if (result.status === 0) {
-            console.log(`Stdout: ${result.stdout}`);
-            core.setOutput('result', result.stdout);
-            const lintResult = JSON.parse(result.stdout);
-            await writeSummary(lintResult);
-        }
-        else {
-            console.log(`Stdout: ${result.stdout}`);
-            console.error(`Stderr: ${result.stderr}`);
-            core.setFailed(`Stderr: ${result.stderr}`);
-        }
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            core.setFailed(error.message);
-        }
-        else {
-            core.setFailed(`An unexpected error occurred: ${error}`);
-        }
-    }
-}
-run();
 
 
 /***/ }),
@@ -29431,6 +29555,14 @@ module.exports = require("node:child_process");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 7561:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
 
 /***/ }),
 

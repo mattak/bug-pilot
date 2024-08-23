@@ -131,3 +131,4 @@ out
 # intellij
 .idea/
 /bin
+/tmp

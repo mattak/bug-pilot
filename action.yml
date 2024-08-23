@@ -6,21 +6,21 @@ runs:
   main: "dist/index.js"
 
 inputs:
-  log_file:
+  log-file:
     description: "The path of analyze logs"
     required: true
-  job_name:
+  job-name:
     description: "The name of target job for analyze logs. If set this, analyze summary can export precise link for the build log."
     required: false
     default: ""
-  step_name:
+  step-name:
     description: "The name of target job step for analyze logs. If set this, analyze summary can export precise link for the build log."
     required: false
     default: ""
-  github_token:
+  github-token:
     description: "Github Access Token for analyzing build job log."
     required: false
-    default: ${{ secrets.GITHUB_TOKEN }}
+    default: ${{ github.token }}
 
 outputs:
   errors:

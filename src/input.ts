@@ -1,4 +1,5 @@
 import os from "os";
+import * as github from "@actions/github";
 import * as core from "@actions/core";
 import * as fs from "node:fs";
 
@@ -41,15 +42,16 @@ export function getExecType(): string {
 }
 
 export function validateInput(input: ActionInput): [boolean, string] {
-  if (!fs.existsSync(input.logFile)) return [false, `ERROR: logFile is not found: ${input.logFile}`];
+  if (!fs.existsSync(input.logFile)) return [false, `ERROR: log-file is not found: ${input.logFile}`];
+  if (input.githubToken === "") return [false, "ERROR: github-token is not set."];
   return [true, ""];
 }
 
 export function parseInput(): ActionInput {
-  const logFile = core.getInput('log_file', {required: true});
-  const stepName = core.getInput('step_name', {required: false});
-  const jobName = core.getInput('job_name', {required: false});
-  const githubToken = core.getInput('github_token', {required: true});
+  const logFile = core.getInput('log-file', {required: true});
+  const stepName = core.getInput('step-name', {required: false});
+  const jobName = core.getInput('job-name', {required: false});
+  let githubToken = core.getInput('github-token', {required: false});
 
   return {
     logFile,

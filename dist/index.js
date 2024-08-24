@@ -221,7 +221,7 @@ async function getTargetJobURL(githubToken, jobName, stepName) {
     if (!buildStep)
         return null;
     const stepNumber = buildStep.number;
-    return `${job.run_url}/job/${job.id}#step:${stepNumber}`;
+    return `${job.html_url}/job/${job.id}#step:${stepNumber}`;
 }
 async function writeSummary(json, input) {
     const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
@@ -231,7 +231,7 @@ async function writeSummary(json, input) {
         const errorCount = json.errors.length;
         let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
         for (const error of json.errors) {
-            const items = error.matches.map(x => `[L${x.start},${x.end}](${baseURL}:${x.start})\n\n`
+            const items = error.matches.map(x => `[L${x.start},${x.end}](${baseURL}:${x.start}) \n\n`
                 + '```text\n'
                 + x.message
                 + '\n```\n');

@@ -22,7 +22,7 @@ async function getTargetJobURL(githubToken: string, jobName: string, stepName: s
   if (!buildStep) return null;
 
   const stepNumber = buildStep.number;
-  return `${job.run_url}/job/${job.id}#step:${stepNumber}`;
+  return `${job.html_url}/job/${job.id}#step:${stepNumber}`;
 }
 
 export async function writeSummary(json: LogLintResult, input: ActionInput) {
@@ -34,7 +34,7 @@ export async function writeSummary(json: LogLintResult, input: ActionInput) {
     let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
     for (const error of json.errors) {
       const items: string[] = error.matches.map(x =>
-        `[L${x.start},${x.end}](${baseURL}:${x.start})\n\n`
+        `[L${x.start},${x.end}](${baseURL}:${x.start}) \n\n`
         + '```text\n'
         + x.message
         + '\n```\n'

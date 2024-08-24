@@ -10,10 +10,10 @@ import path from "node:path";
 async function run() {
   try {
     // 必要な入力を取得
-    const token = core.getInput('token', {required: true});
-    const runId = core.getInput('run_id', {required: true});
-    const owner = core.getInput('owner', {required: true});
-    const repo = core.getInput('repo', {required: true});
+    const token = core.getInput('github-token', {required: true});
+    const runId = github.context.runId;
+    const owner = github.context.repo.owner;
+    const repo = github.context.repo.repo;
 
     // GitHub APIリクエストの設定
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;

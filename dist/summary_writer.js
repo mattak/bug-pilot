@@ -44,7 +44,7 @@ async function getTargetJobURL(githubToken, jobName, stepName) {
     if (!buildStep)
         return null;
     const stepNumber = buildStep.number;
-    return `${job.html_url}/job/${job.id}#step:${stepNumber}`;
+    return `${job.html_url}#step:${stepNumber}`;
 }
 async function writeSummary(json, input) {
     const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);

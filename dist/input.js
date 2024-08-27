@@ -61,19 +61,20 @@ function getExecType() {
     }
 }
 function validateInput(input) {
-    if (!fs.existsSync(input.logFile))
-        return [false, `ERROR: log-file is not found: ${input.logFile}`];
+    if (!fs.existsSync(input.runId))
+        return [false, `ERROR: run-id is not found: ${input.runId}`];
     if (input.githubToken === "")
         return [false, "ERROR: github-token is not set."];
     return [true, ""];
 }
 function parseInput() {
-    const logFile = core.getInput('log-file', { required: true });
+    // const logFile = core.getInput('log-file', {required: true});
+    const runId = core.getInput('run-id', { required: true });
     const stepName = core.getInput('step-name', { required: false });
     const jobName = core.getInput('job-name', { required: false });
     let githubToken = core.getInput('github-token', { required: false });
     return {
-        logFile,
+        runId,
         jobName,
         stepName,
         githubToken,

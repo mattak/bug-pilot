@@ -57,13 +57,27 @@ async function downloadLogZip(logUrl, headers) {
     fs.writeFileSync(outputPath, logResponse.data);
     return outputPath;
 }
+async function getFilesRecursively(directory) {
+    let files = [];
+    const items = await fs.promises.readdir(directory, { withFileTypes: true });
+    for (const item of items) {
+        const fullPath = node_path_1.default.join(directory, item.name);
+        if (item.isDirectory()) {
+            const nestedFiles = await getFilesRecursively(fullPath);
+            files = files.concat(nestedFiles);
+        }
+        else {
+            files.push(fullPath);
+        }
+    }
+    return files;
+}
 async function unzipLogFile(zipFilePath) {
     const extractPath = node_path_1.default.join(process.cwd(), 'tmp');
     await fs.promises.mkdir(extractPath, { recursive: true });
     const directory = await unzipper.Open.file(zipFilePath);
     await directory.extract({ path: extractPath });
-    const files = fs.readdirSync(extractPath);
-    return files;
+    return await getFilesRecursively(extractPath);
 }
 async function run() {
     try {

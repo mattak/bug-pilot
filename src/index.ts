@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import axios from "axios";
 import path from "node:path";
 import * as unzipper from 'unzipper';
-import {parseInput} from "./input";
+import {parseInput, validateInput} from "./input";
 
 type Headers = {
   'User-Agent': string,
@@ -33,7 +33,7 @@ async function downloadLogZip(logUrl: string, headers: Headers): Promise<string>
 
 async function getFilesRecursively(directory: string): Promise<string[]> {
   let files: string[] = [];
-  const items = await fs.promises.readdir(directory, { withFileTypes: true });
+  const items = await fs.promises.readdir(directory, {withFileTypes: true});
 
   for (const item of items) {
     const fullPath = path.join(directory, item.name);
@@ -58,10 +58,21 @@ async function unzipLogFile(zipFilePath: string): Promise<string[]> {
   return await getFilesRecursively(extractPath);
 }
 
+function getTargetLogFile(files: string[], jobName: string, stepName: string): string | null {
+  const targetFile = files.find((file) => {
+    const segments = file.split('/');
+    return segments.length > 2
+      && segments[segments.length - 2] == jobName
+      && segments[segments.length - 1].includes(stepName);
+  });
+
+  return targetFile || null;
+}
+
 async function run() {
   try {
     // 必要な入力を取得
-    const input = parseInput();
+    const input = await parseInput();
     const token = input.githubToken;
     const runId = input.runId;
     const owner = github.context.repo.owner;
@@ -72,11 +83,15 @@ async function run() {
       'Authorization': `token ${token}`,
     };
 
+    const [isValid, invalidMessage] = validateInput(input);
+    if (!isValid) {
+      core.setFailed(invalidMessage);
+      return;
+    }
+
     // 1. Log URLを取得
     const logUrl = await requestLogUrl(owner, repo, runId, headers);
-    if (!logUrl) {
-      throw new Error('Failed to retrieve logs URL.');
-    }
+    if (!logUrl) throw new Error('Failed to retrieve logs URL.');
     core.info(`Log URL: ${logUrl}`);
 
     // 2. LogZipをダウンロード
@@ -86,6 +101,14 @@ async function run() {
     const unzippedFiles = await unzipLogFile(logZipFilePath);
     core.info(`logZipFilePath: ${logZipFilePath}`);
     core.info(`unzipped files: ${unzippedFiles.join(', ')}`)
+    unzippedFiles.forEach((file) => {
+      core.info(" " + file);
+    });
+
+    // 4. LogFileの中から対象のファイルを取得
+    const targetLogFile = getTargetLogFile(unzippedFiles, input.jobName, input.stepName);
+    if (!targetLogFile) throw new Error('Failed to find target log file.');
+    core.info(`targetLogFile: ${targetLogFile}`);
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(`Action failed with error: ${error.message}`);
@@ -94,7 +117,6 @@ async function run() {
     }
   }
 }
-
 
 // async function run() {
 //   try {

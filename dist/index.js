@@ -79,10 +79,19 @@ async function unzipLogFile(zipFilePath) {
     await directory.extract({ path: extractPath });
     return await getFilesRecursively(extractPath);
 }
+function getTargetLogFile(files, jobName, stepName) {
+    const targetFile = files.find((file) => {
+        const segments = file.split('/');
+        return segments.length > 2
+            && segments[segments.length - 2] == jobName
+            && segments[segments.length - 1].includes(stepName);
+    });
+    return targetFile || null;
+}
 async function run() {
     try {
         // 必要な入力を取得
-        const input = (0, input_1.parseInput)();
+        const input = await (0, input_1.parseInput)();
         const token = input.githubToken;
         const runId = input.runId;
         const owner = github.context.repo.owner;
@@ -92,11 +101,15 @@ async function run() {
             'User-Agent': userAgent,
             'Authorization': `token ${token}`,
         };
+        const [isValid, invalidMessage] = (0, input_1.validateInput)(input);
+        if (!isValid) {
+            core.setFailed(invalidMessage);
+            return;
+        }
         // 1. Log URLを取得
         const logUrl = await requestLogUrl(owner, repo, runId, headers);
-        if (!logUrl) {
+        if (!logUrl)
             throw new Error('Failed to retrieve logs URL.');
-        }
         core.info(`Log URL: ${logUrl}`);
         // 2. LogZipをダウンロード
         const logZipFilePath = await downloadLogZip(logUrl, headers);
@@ -104,6 +117,14 @@ async function run() {
         const unzippedFiles = await unzipLogFile(logZipFilePath);
         core.info(`logZipFilePath: ${logZipFilePath}`);
         core.info(`unzipped files: ${unzippedFiles.join(', ')}`);
+        unzippedFiles.forEach((file) => {
+            core.info(" " + file);
+        });
+        // 4. LogFileの中から対象のファイルを取得
+        const targetLogFile = getTargetLogFile(unzippedFiles, input.jobName, input.stepName);
+        if (!targetLogFile)
+            throw new Error('Failed to find target log file.');
+        core.info(`targetLogFile: ${targetLogFile}`);
     }
     catch (error) {
         if (error instanceof Error) {
@@ -240,13 +261,15 @@ function parseInput() {
     const runId = core.getInput('run-id', { required: true });
     const stepName = core.getInput('step-name', { required: false });
     const jobName = core.getInput('job-name', { required: false });
-    let githubToken = core.getInput('github-token', { required: false });
-    return {
+    const githubToken = process.env.GITHUB_TOKEN;
+    if (githubToken === undefined)
+        return Promise.reject("ERROR: Environment variable GITHUB_TOKEN is not set.");
+    return Promise.resolve({
         runId,
         jobName,
         stepName,
         githubToken,
-    };
+    });
 }
 
 

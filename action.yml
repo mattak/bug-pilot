@@ -20,10 +20,6 @@ inputs:
     description: "The name of target job step for analyze logs. If set this, analyze summary can export precise link for the build log."
     required: true
     default: ""
-  github-token:
-    description: "Github Access Token for analyzing build job log."
-    required: false
-    default: ${{ github.token }}
 
 outputs:
   errors:

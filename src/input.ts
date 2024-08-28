@@ -48,17 +48,18 @@ export function validateInput(input: ActionInput): [boolean, string] {
   return [true, ""];
 }
 
-export function parseInput(): ActionInput {
+export function parseInput(): Promise<ActionInput> {
   // const logFile = core.getInput('log-file', {required: true});
   const runId = core.getInput('run-id', {required: true});
   const stepName = core.getInput('step-name', {required: false});
   const jobName = core.getInput('job-name', {required: false});
-  let githubToken = core.getInput('github-token', {required: false});
+  const githubToken = process.env.GITHUB_TOKEN;
+  if (githubToken === undefined) return Promise.reject("ERROR: Environment variable GITHUB_TOKEN is not set.");
 
-  return {
+  return Promise.resolve({
     runId,
     jobName,
     stepName,
     githubToken,
-  };
+  });
 }

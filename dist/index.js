@@ -220,7 +220,6 @@ exports.validateInput = validateInput;
 exports.parseInput = parseInput;
 const os_1 = __importDefault(__nccwpck_require__(2037));
 const core = __importStar(__nccwpck_require__(2186));
-const fs = __importStar(__nccwpck_require__(7561));
 function getExecType() {
     const _operatingSystem = os_1.default.platform(); // e.g. 'darwin', 'win32', 'linux'
     const _architecture = os_1.default.arch(); // e.g. 'x64', 'arm', 'arm64'
@@ -250,8 +249,6 @@ function getExecType() {
     }
 }
 function validateInput(input) {
-    if (!fs.existsSync(input.runId))
-        return [false, `ERROR: run-id is not found: ${input.runId}`];
     if (input.githubToken === "")
         return [false, "ERROR: github-token is not set."];
     return [true, ""];
@@ -45305,14 +45302,6 @@ module.exports = require("net");
 
 "use strict";
 module.exports = require("node:events");
-
-/***/ }),
-
-/***/ 7561:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:fs");
 
 /***/ }),
 

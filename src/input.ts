@@ -43,7 +43,6 @@ export function getExecType(): string {
 }
 
 export function validateInput(input: ActionInput): [boolean, string] {
-  if (!fs.existsSync(input.runId)) return [false, `ERROR: run-id is not found: ${input.runId}`];
   if (input.githubToken === "") return [false, "ERROR: github-token is not set."];
   return [true, ""];
 }

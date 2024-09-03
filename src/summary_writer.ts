@@ -16,14 +16,32 @@ async function getTargetJobURL(githubToken: string, jobName: string, stepName: s
   });
 
   const job = jobs.jobs.find(job => job.name === jobName);
-  if (!job) return null;
+  if (!job) {
+    console.debug(`jobName not found: ${jobName} in ${jobs.jobs.map(job => job.name).join(", ")}`);
+    return null;
+  }
 
   const buildStep = job.steps?.find(step => step.name === stepName);
-  if (!buildStep) return null;
+  if (!buildStep) {
+    console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
+    return null;
+  }
 
   const stepNumber = buildStep.number;
   return `${job.html_url}#step:${stepNumber}`;
 }
+
+function createLogLinkText(baseURL: string | null, match: { start: number, end: number, message: string }): string {
+  const link = (baseURL === null) ? `L${match.start},${match.end}` : `[L${match.start},${match.end}](${baseURL}:${match.start})`;
+  return link;
+  //  + '```text\n' + match.message + '\n```\n';
+}
+//
+// return `[L${match.start},${match.end}](${baseURL}:${match.start}) \n\n`
+//   + '```text\n'
+//   + match.message
+//   + '\n```\n'
+// }
 
 export async function writeSummary(json: LogLintResult, input: ActionInput) {
   const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
@@ -34,10 +52,7 @@ export async function writeSummary(json: LogLintResult, input: ActionInput) {
     let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
     for (const error of json.errors) {
       const items: string[] = error.matches.map(x =>
-        `[L${x.start},${x.end}](${baseURL}:${x.start}) \n\n`
-        + '```text\n'
-        + x.message
-        + '\n```\n'
+        createLogLinkText(baseURL, x) + '\n\n```text\n' + x.message + '\n```\n'
       );
       const statement = `<details><summary>${error.name}</summary>`
         + '\n\n'

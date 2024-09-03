@@ -128,7 +128,7 @@ async function run() {
       console.log(`Stdout: ${result.stdout}`);
       core.setOutput('result', result.stdout);
       const lintResult = JSON.parse(result.stdout);
-      await writeSummary(lintResult, input);
+      await writeSummary(lintResult, input, targetLogFile);
     } else {
       console.log(`Stdout: ${result.stdout}`);
       console.error(`Stderr: ${result.stderr}`);

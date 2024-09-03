@@ -141,7 +141,7 @@ async function run() {
             console.log(`Stdout: ${result.stdout}`);
             core.setOutput('result', result.stdout);
             const lintResult = JSON.parse(result.stdout);
-            await (0, summary_writer_1.writeSummary)(lintResult, input);
+            await (0, summary_writer_1.writeSummary)(lintResult, input, targetLogFile);
         }
         else {
             console.log(`Stdout: ${result.stdout}`);
@@ -327,7 +327,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.writeSummary = writeSummary;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
-async function getTargetJobURL(githubToken, jobName, stepName) {
+async function getTargetJobURL(githubToken, jobName, stepName, targetLogFile) {
     const octokit = github.getOctokit(githubToken);
     const repo = {
         owner: github.context.repo.owner,
@@ -343,12 +343,20 @@ async function getTargetJobURL(githubToken, jobName, stepName) {
         console.debug(`jobName not found: ${jobName} in ${jobs.jobs.map(job => job.name).join(", ")}`);
         return null;
     }
-    const buildStep = job.steps?.find(step => step.name === stepName);
-    if (!buildStep) {
-        console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
+    // XXX: not working if build failed.
+    // const buildStep = job.steps?.find(step => step.name === stepName);
+    // if (!buildStep) {
+    //   console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
+    //   return null;
+    // }
+    // const stepNumber = buildStep.number;
+    // get step number from log file name `jobName/<step_number>_<stepName>.txt`
+    const match = targetLogFile.match(/\/(\d+)_[^\/]+\.txt$/);
+    if (match === null) {
+        console.debug(`stepNumber not found in filePath: ${targetLogFile}`);
         return null;
     }
-    const stepNumber = buildStep.number;
+    const stepNumber = match[1];
     return `${job.html_url}#step:${stepNumber}`;
 }
 function createLogLinkText(baseURL, match) {
@@ -362,8 +370,8 @@ function createLogLinkText(baseURL, match) {
 //   + match.message
 //   + '\n```\n'
 // }
-async function writeSummary(json, input) {
-    const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
+async function writeSummary(json, input, targetLogFile) {
+    const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName, targetLogFile);
     console.log("writeSummary: json=", JSON.stringify(json));
     console.log("baseURL: ", baseURL);
     if (json.errors) {

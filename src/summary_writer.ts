@@ -3,7 +3,7 @@ import * as core from "@actions/core";
 import {LogLintResult} from "./loglint";
 import {ActionInput} from "./input";
 
-async function getTargetJobURL(githubToken: string, jobName: string, stepName: string): Promise<string | null> {
+async function getTargetJobURL(githubToken: string, jobName: string, stepName: string, targetLogFile: string): Promise<string | null> {
   const octokit = github.getOctokit(githubToken);
   const repo = {
     owner: github.context.repo.owner,
@@ -21,13 +21,21 @@ async function getTargetJobURL(githubToken: string, jobName: string, stepName: s
     return null;
   }
 
-  const buildStep = job.steps?.find(step => step.name === stepName);
-  if (!buildStep) {
-    console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
+  // XXX: not working if build failed.
+  // const buildStep = job.steps?.find(step => step.name === stepName);
+  // if (!buildStep) {
+  //   console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
+  //   return null;
+  // }
+  // const stepNumber = buildStep.number;
+
+  // get step number from log file name `jobName/<step_number>_<stepName>.txt`
+  const match = targetLogFile.match(/\/(\d+)_[^\/]+\.txt$/);
+  if (match === null) {
+    console.debug(`stepNumber not found in filePath: ${targetLogFile}`);
     return null;
   }
-
-  const stepNumber = buildStep.number;
+  const stepNumber = match[1];
   return `${job.html_url}#step:${stepNumber}`;
 }
 
@@ -43,8 +51,8 @@ function createLogLinkText(baseURL: string | null, match: { start: number, end: 
 //   + '\n```\n'
 // }
 
-export async function writeSummary(json: LogLintResult, input: ActionInput) {
-  const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
+export async function writeSummary(json: LogLintResult, input: ActionInput, targetLogFile: string) {
+  const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName, targetLogFile);
   console.log("writeSummary: json=", JSON.stringify(json));
   console.log("baseURL: ", baseURL);
   if (json.errors) {

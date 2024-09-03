@@ -2,7 +2,7 @@ import os from "os";
 import * as core from "@actions/core";
 
 export type ActionInput = {
-  runId: string,
+  runId: number,
   jobName: string,
   stepName: string,
   githubToken: string,
@@ -46,7 +46,7 @@ export function validateInput(input: ActionInput): [boolean, string] {
 
 export function parseInput(): Promise<ActionInput> {
   // const logFile = core.getInput('log-file', {required: true});
-  const runId = core.getInput('run-id', {required: true});
+  const runId = parseInt(core.getInput('run-id', {required: true}));
   const stepName = core.getInput('step-name', {required: false});
   const jobName = core.getInput('job-name', {required: false});
   const githubToken = process.env.GITHUB_TOKEN;

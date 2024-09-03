@@ -66,7 +66,7 @@ function validateInput(input) {
 }
 function parseInput() {
     // const logFile = core.getInput('log-file', {required: true});
-    const runId = core.getInput('run-id', { required: true });
+    const runId = parseInt(core.getInput('run-id', { required: true }));
     const stepName = core.getInput('step-name', { required: false });
     const jobName = core.getInput('job-name', { required: false });
     const githubToken = process.env.GITHUB_TOKEN;

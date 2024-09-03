@@ -13,7 +13,7 @@ type Headers = {
   'Authorization': string,
 };
 
-async function requestLogUrl(owner: string, repo: string, runId: string, headers: Headers): Promise<string> {
+async function requestLogUrl(owner: string, repo: string, runId: number, headers: Headers): Promise<string> {
   // GitHub APIリクエストの設定
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
   // ログURLを取得

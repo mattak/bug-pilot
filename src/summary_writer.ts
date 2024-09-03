@@ -3,13 +3,13 @@ import * as core from "@actions/core";
 import {LogLintResult} from "./loglint";
 import {ActionInput} from "./input";
 
-async function getTargetJobURL(githubToken: string, jobName: string, stepName: string, targetLogFile: string): Promise<string | null> {
+async function getTargetJobURL(githubToken: string, runId: number, jobName: string, stepName: string, targetLogFile: string): Promise<string | null> {
   const octokit = github.getOctokit(githubToken);
   const repo = {
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
   };
-  const runId = github.context.runId;
+  // const runId = github.context.runId;
   const {data: jobs} = await octokit.rest.actions.listJobsForWorkflowRun({
     ...repo,
     run_id: runId
@@ -22,20 +22,20 @@ async function getTargetJobURL(githubToken: string, jobName: string, stepName: s
   }
 
   // XXX: not working if build failed.
-  // const buildStep = job.steps?.find(step => step.name === stepName);
-  // if (!buildStep) {
-  //   console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
-  //   return null;
-  // }
-  // const stepNumber = buildStep.number;
-
-  // get step number from log file name `jobName/<step_number>_<stepName>.txt`
-  const match = targetLogFile.match(/\/(\d+)_[^\/]+\.txt$/);
-  if (match === null) {
-    console.debug(`stepNumber not found in filePath: ${targetLogFile}`);
+  const buildStep = job.steps?.find(step => step.name === stepName);
+  if (!buildStep) {
+    console.debug(`stepName not found: ${stepName} in ${job.steps?.map(step => step.name).join(", ")}`);
     return null;
   }
-  const stepNumber = match[1];
+  const stepNumber = buildStep.number;
+
+  // get step number from log file name `jobName/<step_number>_<stepName>.txt`
+  // const match = targetLogFile.match(/\/(\d+)_[^\/]+\.txt$/);
+  // if (match === null) {
+  //   console.debug(`stepNumber not found in filePath: ${targetLogFile}`);
+  //   return null;
+  // }
+  // const stepNumber = match[1];
   return `${job.html_url}#step:${stepNumber}`;
 }
 
@@ -52,7 +52,7 @@ function createLogLinkText(baseURL: string | null, match: { start: number, end: 
 // }
 
 export async function writeSummary(json: LogLintResult, input: ActionInput, targetLogFile: string) {
-  const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName, targetLogFile);
+  const baseURL = await getTargetJobURL(input.githubToken, input.runId, input.jobName, input.stepName, targetLogFile);
   console.log("writeSummary: json=", JSON.stringify(json));
   console.log("baseURL: ", baseURL);
   if (json.errors) {

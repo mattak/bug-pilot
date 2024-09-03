@@ -40,6 +40,8 @@ const axios_1 = __importDefault(__nccwpck_require__(8757));
 const node_path_1 = __importDefault(__nccwpck_require__(9411));
 const unzipper = __importStar(__nccwpck_require__(1639));
 const input_1 = __nccwpck_require__(3617);
+const node_child_process_1 = __nccwpck_require__(7718);
+const summary_writer_1 = __nccwpck_require__(9030);
 async function requestLogUrl(owner, repo, runId, headers) {
     // GitHub APIリクエストの設定
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -125,6 +127,27 @@ async function run() {
         if (!targetLogFile)
             throw new Error('Failed to find target log file.');
         core.info(`targetLogFile: ${targetLogFile}`);
+        // 5. LogLintを実行
+        const platform = 'linux_amd64';
+        const execPath = __nccwpck_require__.ab + "loglint";
+        const lintPath = __nccwpck_require__.ab + ".loglint.json";
+        // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
+        const inputContent = fs.readFileSync(targetLogFile, { encoding: 'utf-8' });
+        const result = (0, node_child_process_1.spawnSync)(__nccwpck_require__.ab + "loglint", ['-f', lintPath], {
+            input: inputContent,
+            encoding: 'utf-8'
+        });
+        if (result.status === 0) {
+            console.log(`Stdout: ${result.stdout}`);
+            core.setOutput('result', result.stdout);
+            const lintResult = JSON.parse(result.stdout);
+            await (0, summary_writer_1.writeSummary)(lintResult, input);
+        }
+        else {
+            console.log(`Stdout: ${result.stdout}`);
+            console.error(`Stderr: ${result.stderr}`);
+            core.setFailed(result.stderr);
+        }
     }
     catch (error) {
         if (error instanceof Error) {
@@ -267,6 +290,83 @@ function parseInput() {
         stepName,
         githubToken,
     });
+}
+
+
+/***/ }),
+
+/***/ 9030:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.writeSummary = writeSummary;
+const github = __importStar(__nccwpck_require__(5438));
+const core = __importStar(__nccwpck_require__(2186));
+async function getTargetJobURL(githubToken, jobName, stepName) {
+    const octokit = github.getOctokit(githubToken);
+    const repo = {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+    };
+    const runId = github.context.runId;
+    const { data: jobs } = await octokit.rest.actions.listJobsForWorkflowRun({
+        ...repo,
+        run_id: runId
+    });
+    const job = jobs.jobs.find(job => job.name === jobName);
+    if (!job)
+        return null;
+    const buildStep = job.steps?.find(step => step.name === stepName);
+    if (!buildStep)
+        return null;
+    const stepNumber = buildStep.number;
+    return `${job.html_url}#step:${stepNumber}`;
+}
+async function writeSummary(json, input) {
+    const baseURL = await getTargetJobURL(input.githubToken, input.jobName, input.stepName);
+    console.log("writeSummary: json=", JSON.stringify(json));
+    console.log("baseURL: ", baseURL);
+    if (json.errors) {
+        const errorCount = json.errors.length;
+        let summary = core.summary.addHeading(`Errors (${errorCount})`, 2);
+        for (const error of json.errors) {
+            const items = error.matches.map(x => `[L${x.start},${x.end}](${baseURL}:${x.start}) \n\n`
+                + '```text\n'
+                + x.message
+                + '\n```\n');
+            const statement = `<details><summary>${error.name}</summary>`
+                + '\n\n'
+                + items.join("\n")
+                + '\n</details>\n';
+            summary = summary.addRaw(statement);
+        }
+        await summary.write();
+    }
 }
 
 
@@ -45294,6 +45394,14 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 7718:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:child_process");
 
 /***/ }),
 

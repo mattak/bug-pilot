@@ -5,6 +5,8 @@ import axios from "axios";
 import path from "node:path";
 import * as unzipper from 'unzipper';
 import {parseInput, validateInput} from "./input";
+import {spawnSync} from "node:child_process";
+import {writeSummary} from "./summary_writer";
 
 type Headers = {
   'User-Agent': string,
@@ -109,6 +111,29 @@ async function run() {
     const targetLogFile = getTargetLogFile(unzippedFiles, input.jobName, input.stepName);
     if (!targetLogFile) throw new Error('Failed to find target log file.');
     core.info(`targetLogFile: ${targetLogFile}`);
+
+    // 5. LogLintを実行
+    const platform = 'linux_amd64';
+    const execPath = `${__dirname}/bin/${platform}/loglint`;
+    const lintPath = `${__dirname}/.loglint.json`;
+
+    // spawnSyncでコマンドを実行し、inputとしてファイル内容を渡す
+    const inputContent = fs.readFileSync(targetLogFile, {encoding: 'utf-8'});
+    const result = spawnSync(execPath, ['-f', lintPath], {
+      input: inputContent,
+      encoding: 'utf-8'
+    });
+
+    if (result.status === 0) {
+      console.log(`Stdout: ${result.stdout}`);
+      core.setOutput('result', result.stdout);
+      const lintResult = JSON.parse(result.stdout);
+      await writeSummary(lintResult, input);
+    } else {
+      console.log(`Stdout: ${result.stdout}`);
+      console.error(`Stderr: ${result.stderr}`);
+      core.setFailed(result.stderr);
+    }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(`Action failed with error: ${error.message}`);

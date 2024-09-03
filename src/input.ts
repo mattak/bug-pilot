@@ -1,10 +1,7 @@
 import os from "os";
-import * as github from "@actions/github";
 import * as core from "@actions/core";
-import * as fs from "node:fs";
 
 export type ActionInput = {
-  // logFile: string,
   runId: string,
   jobName: string,
   stepName: string,
